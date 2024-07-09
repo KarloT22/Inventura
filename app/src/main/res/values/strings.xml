@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Inventura</string>
+    <string name="pregled">Pregled</string>
+    <string name="naziv">Naziv</string>
+    <string name="dodaj">Dodaj</string>
+    <string name="inventura">Inventura</string>
+    <string name="kolicina">Količina</string>
+    <string name="mjerna_jedinica">Mjerna jedinica</string>
+    <string name="edit">Uredi</string>
+    <string name="finish">Gotovo</string>
+</resources>
