@@ -1,7 +1,6 @@
 package com.example.inventura;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -9,15 +8,9 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.material.snackbar.Snackbar;
-
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
-
 public class InventuraActivity extends AppCompatActivity {
     private EditText editText1, editText2, editText3;
-    private SharedPreferences sharedPreferences;
+    private DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,48 +21,28 @@ public class InventuraActivity extends AppCompatActivity {
         editText2 = findViewById(R.id.editText2);
         editText3 = findViewById(R.id.editText3);
 
-        sharedPreferences = getSharedPreferences("MojSharedPreferences", MODE_PRIVATE);
+        dbHelper = new DatabaseHelper(this);
 
         Button dodaj = findViewById(R.id.gumb_dodaj);
         dodaj.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String text1 = editText1.getText().toString().trim().toUpperCase(Locale.getDefault());
-                String text2 = editText2.getText().toString().trim().toUpperCase(Locale.getDefault());
-                String text3 = editText3.getText().toString().trim().toUpperCase(Locale.getDefault());
+                String text1 = editText1.getText().toString().trim().toUpperCase();
+                String text2 = editText2.getText().toString().trim();
+                String text3 = editText3.getText().toString().trim().toUpperCase();
 
-                // Kombiniranje tekstova iz sva tri EditText-a u jedan string
+                // Combine texts from all three EditTexts into one string
                 String combinedText = text1 + " - " + text2 + " - " + text3;
 
-                // Dohvaćanje trenutnog skupa podataka
-                Set<String> dataSet = sharedPreferences.getStringSet("dataSet2", new HashSet<>());
+                // Insert item into dataSet2 table with quantity
+                long result = dbHelper.insertItemDataSet2(combinedText, Integer.parseInt(text2));
 
-                // Provjera postojanja elementa u listi
-                boolean containsItem = false;
-                for (String item : dataSet) {
-                    if (item.toUpperCase(Locale.getDefault()).equals(combinedText)) {
-                        containsItem = true;
-                        break;
-                    }
+                // Check if insertion was successful (result is the row ID if successful, -1 if failed)
+                if (result != -1) {
+                    // Show success message or perform actions after successful insertion
+                } else {
+                    // Show error message or handle failed insertion
                 }
-
-                if (containsItem) {
-                    Snackbar.make(v, "Stavka već postoji", Snackbar.LENGTH_SHORT)
-                            .setBackgroundTint(getResources().getColor(android.R.color.holo_red_light)).show();
-                    return; // Ako element već postoji, prekidamo izvršavanje i ne dodajemo ga u listu
-                }
-
-                // Spremanje ažuriranog skupa podataka
-                dataSet.add(combinedText);
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putStringSet("dataSet2", dataSet);
-
-                // Spremanje količine pod ključem 'text1'
-                editor.putInt(text1, Integer.parseInt(text2));
-                editor.apply();
-
-                Snackbar.make(v, "Stavka je uspješno dodana", Snackbar.LENGTH_SHORT)
-                        .setBackgroundTint(getResources().getColor(android.R.color.holo_green_light)).show();
             }
         });
 
@@ -83,8 +56,11 @@ public class InventuraActivity extends AppCompatActivity {
         });
 
         Button nazad = findViewById(R.id.gumb_nazad);
-        nazad.setOnClickListener(v -> {
-            finish();
+        nazad.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
         });
     }
 }

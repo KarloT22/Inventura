@@ -9,14 +9,25 @@ import android.database.sqlite.SQLiteOpenHelper;
 import java.util.ArrayList;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
-
-    private static final String DATABASE_NAME = "inventura.db";
+    private static final String DATABASE_NAME = "InventoryDB";
     private static final int DATABASE_VERSION = 1;
 
-    private static final String TABLE_ITEMS = "items";
-    private static final String COLUMN_ID = "id";
-    private static final String COLUMN_NAME = "name";
-    private static final String COLUMN_QUANTITY = "quantity";
+    // Table names and column names
+    public static final String TABLE_DATA_SET1 = "dataSet1";
+    public static final String TABLE_DATA_SET2 = "dataSet2";
+    public static final String COLUMN_ID = "_id";
+    public static final String COLUMN_ITEM = "item";
+    public static final String COLUMN_QUANTITY = "quantity";
+
+    // SQL statements to create tables
+    private static final String CREATE_TABLE_DATA_SET1 = "CREATE TABLE " + TABLE_DATA_SET1 + "(" +
+            COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+            COLUMN_ITEM + " TEXT UNIQUE)";
+
+    private static final String CREATE_TABLE_DATA_SET2 = "CREATE TABLE " + TABLE_DATA_SET2 + "(" +
+            COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+            COLUMN_ITEM + " TEXT UNIQUE," +
+            COLUMN_QUANTITY + " INTEGER)";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -24,46 +35,63 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String CREATE_ITEMS_TABLE = "CREATE TABLE " + TABLE_ITEMS + "("
-                + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + COLUMN_NAME + " TEXT,"
-                + COLUMN_QUANTITY + " INTEGER"
-                + ")";
-        db.execSQL(CREATE_ITEMS_TABLE);
+        db.execSQL(CREATE_TABLE_DATA_SET1);
+        db.execSQL(CREATE_TABLE_DATA_SET2);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_ITEMS);
+        // Drop older tables if they exist
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_DATA_SET1);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_DATA_SET2);
+
+        // Create tables again
         onCreate(db);
     }
 
-    public void addItem(String name, int quantity) {
+    // Insert item into dataSet1 table
+    public long insertItemDataSet1(String item) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME, name);
-        values.put(COLUMN_QUANTITY, quantity);
-        db.insert(TABLE_ITEMS, null, values);
+        values.put(COLUMN_ITEM, item);
+        long id = db.insert(TABLE_DATA_SET1, null, values);
         db.close();
+        return id;
     }
 
-    public ArrayList<String> getAllItems() {
-        ArrayList<String> items = new ArrayList<>();
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_ITEMS, null);
-        if (cursor.moveToFirst()) {
-            do {
-                items.add(cursor.getString(1) + " - " + cursor.getInt(2));
-            } while (cursor.moveToNext());
-        }
-        cursor.close();
-        db.close();
-        return items;
-    }
-
-    public void deleteItem(String name) {
+    // Insert item into dataSet2 table with quantity
+    public long insertItemDataSet2(String item, int quantity) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_ITEMS, COLUMN_NAME + " = ?", new String[]{name});
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_ITEM, item);
+        values.put(COLUMN_QUANTITY, quantity);
+        long id = db.insert(TABLE_DATA_SET2, null, values);
+        db.close();
+        return id;
+    }
+
+    // Get all items from dataSet1 or dataSet2 table
+    public ArrayList<String> getAllItems(String tableName) {
+        ArrayList<String> itemList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = {COLUMN_ITEM};
+
+        Cursor cursor = db.query(tableName, columns, null, null, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                String item = cursor.getString(cursor.getColumnIndex(COLUMN_ITEM));
+                itemList.add(item);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        db.close();
+        return itemList;
+    }
+
+    // Delete item from dataSet1 or dataSet2 table
+    public void deleteItem(String tableName, String item) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(tableName, COLUMN_ITEM + "=?", new String[]{item});
         db.close();
     }
 }
